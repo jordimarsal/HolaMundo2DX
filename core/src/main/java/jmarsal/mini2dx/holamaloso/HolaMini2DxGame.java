@@ -14,13 +14,13 @@ import java.util.ArrayList;
 
 public class HolaMini2DxGame extends BasicGame {
     public static final String GAME_IDENTIFIER = "jmarsal.mini2dx.holamaloso";
-    public static AssetManager MANAGER = new AssetManager();
+    private static AssetManager MANAGER = new AssetManager();
 
-    public static final int SPRITE_H = 32;
-    public static final int SPRITE_W = 32;
-    public static final int QUIET = 4;
-    public static final int MULTI_INPUT = 11;
-    public static final int MULTI_MOB1 = 20;
+    static final int SPRITE_H = 32;
+    static final int SPRITE_W = 32;
+    private static final int QUIET = 4;
+    private static final int MULTI_INPUT = 11;
+    private static final int MULTI_MOB1 = 20;
 
     private Maloso maloso;
     private Player player;
@@ -28,8 +28,10 @@ public class HolaMini2DxGame extends BasicGame {
     private ArrayList<Integer> deleteList;
     private Texture textuShot;
     private int previousDirection;
-    boolean hasShots = false;
-    float iDelta, mobDelta;
+    private boolean hasShots = false;
+    private float iDelta, mobDelta;
+    private float limY = Gdx.graphics.getHeight() - SPRITE_H;
+    private float limX = Gdx.graphics.getWidth() - SPRITE_W;
 
     @Override
     public void initialise() {
@@ -40,12 +42,12 @@ public class HolaMini2DxGame extends BasicGame {
         }
         allShots = new ArrayList<Shot>();
         deleteList = new ArrayList<Integer>();
-        textuShot = MANAGER.get(loadAssets.getPath()+"disparo.png", Texture.class);
+        textuShot = MANAGER.get(LoadAssets.getPath()+"disparo.png", Texture.class);
 
-        Texture texturePlayer = MANAGER.get(loadAssets.getPath()+"image1.png", Texture.class);
+        Texture texturePlayer = MANAGER.get(LoadAssets.getPath()+"image1.png", Texture.class);
         player = new Player(texturePlayer);
 
-        Texture textuMalo = MANAGER.get(loadAssets.getPath()+"mal1.png", Texture.class);
+        Texture textuMalo = MANAGER.get(LoadAssets.getPath()+"mal1.png", Texture.class);
         maloso = new Maloso(textuMalo);
     }
 
@@ -94,53 +96,61 @@ public class HolaMini2DxGame extends BasicGame {
         if(mobDelta > 10000)mobDelta=0;
     }
 
-
     private void processInput(float delta) {
         float step = 1.3f;
-        boolean pulsed = false;
-        if (Gdx.input.isKeyPressed(Input.Keys.UP) && Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            player.moveStep(step,step);
-            pulsed = true;
-        } else if (Gdx.input.isKeyPressed(Input.Keys.UP) && Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            player.moveStep(-step,step);
-            pulsed = true;
-        } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            player.moveStep(step,-step);
-            pulsed = true;
-        } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            player.moveStep(-step,-step);
-            pulsed = true;
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            upPulsed(step);
+        } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            downPulsed(step);
         }
         step = 2f;
-        if (!pulsed) {
-            if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-                player.moveStep(0, step);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-                player.moveStep(0, -step);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-                player.moveStep(step,0);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-                player.moveStep(-step, 0);
-            } else {
-                if (player.direction != QUIET)previousDirection = player.direction;
+
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            player.moveStep(step,0);
+        } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            player.moveStep(-step, 0);
+        } else {
+            if (player.direction != QUIET)previousDirection = player.direction;
                 player.direction = QUIET;
-            }
         }
+
         iDelta += delta;
         // delta es 0.01, limitamos los disparos por segundo
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && iDelta > (delta * MULTI_INPUT) ) {
-            System.out.println("Fire:" + player.direction);
             allShots.add(getSpriteShot(player.x, player.y));
             hasShots = true;
             iDelta = 0;
         }
+        takeLimits();
+    }
+
+    private void takeLimits() {
         if (iDelta > 1000) iDelta = 0;
         if (player.y < 0) player.y = 0;
         if (player.x < 0) player.x = 0;
-        float limY = Gdx.graphics.getHeight() - SPRITE_H;
-        float limX = Gdx.graphics.getWidth() - SPRITE_W;
+
         if (player.y > limY) player.y = limY;
         if (player.x > limX) player.x = limX;
+    }
+
+    private void upPulsed(float step){
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            player.moveStep(step, step);
+        }else if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)){
+            player.moveStep(-step,step);
+        }else{
+            player.moveStep(0, step);
+        }
+    }
+
+    private void downPulsed(float step){
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)){
+            player.moveStep(step,-step);
+        }else if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)){
+            player.moveStep(-step,-step);
+        }else{
+            player.moveStep(0, -step);
+        }
     }
 
     @Override
